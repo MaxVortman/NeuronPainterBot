@@ -23,8 +23,7 @@ def pil_2_bio(img):
     return img_byte_arr
 
 
-def gen_monet(input_buf):
-    img = PIL.Image.open(input_buf)
+def gen_monet(img):
     resized_img = img.resize((256, 256))
     img_array = keras.preprocessing.image.img_to_array(resized_img)
     img_array = normalize_img(img_array)
@@ -32,7 +31,7 @@ def gen_monet(input_buf):
     prediction = monet_generator.predict(img_array)[0]  # make prediction
     prediction = (prediction * 127.5 + 127.5).astype(np.uint8)  # re-scale
     out_img = PIL.Image.fromarray(prediction).resize(img.size)
-    return pil_2_bio(out_img)
+    return out_img
 
 
 if __name__ == "__main__":

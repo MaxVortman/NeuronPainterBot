@@ -1,11 +1,13 @@
 import logging
 
+import PIL
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ContentType
 from src.config_parser import get_api_token
-from src.image_generator import gen_monet
+from src.image_generator import gen_monet, pil_2_bio
 from aiogram.types import InputFile
 import io
+import src.video_generator
 
 API_TOKEN = get_api_token()
 
@@ -30,16 +32,21 @@ async def monet_photo(message: types.Message):
     img_buf = io.BytesIO()
     await bot.download_file(file_path, img_buf)
     img_buf.seek(0)
-    out_img = gen_monet(img_buf)
-    out_file = InputFile(out_img, filename="monet.jpg")
+    img = PIL.Image.open(img_buf)
+    out_img = gen_monet(img)
+    out_file = InputFile(pil_2_bio(out_img), filename="monet.jpg")
     await message.reply_photo(out_file)
 
 
 @dp.message_handler(content_types=ContentType.VIDEO_NOTE)
-async def video_note_echo(message: types.Message):
+async def video_note_monet(message: types.Message):
     file = await bot.get_file(message.video_note.file_id)
     file_path = file.file_path
-    await bot.download_file(file_path, "test.mp4")
+    video_path = '../data/input.mp4'
+    await bot.download_file(file_path, video_path)
+    src.video_generator.gen_monet(video_path)
+    out_file = InputFile('../data/output.mp4', filename="monet.mp4")
+    await message.reply_video_note(out_file)
 
 
 if __name__ == '__main__':
