@@ -5,6 +5,7 @@ from aiogram.types import ContentType
 from src.config_parser import get_api_token
 from src.image_generator import gen_monet
 from aiogram.types import InputFile
+import io
 
 API_TOKEN = get_api_token()
 
@@ -23,11 +24,13 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(content_types=ContentType.PHOTO)
 async def monet_photo(message: types.Message):
-    file = await bot.get_file(message.photo[2].file_id)
+    photo = message.photo[2]
+    file = await bot.get_file(photo.file_id)
     file_path = file.file_path
-    img_path = '../data/img.jpg'
-    await bot.download_file(file_path, img_path)
-    out_img = gen_monet(img_path)
+    img_buf = io.BytesIO()
+    await bot.download_file(file_path, img_buf)
+    img_buf.seek(0)
+    out_img = gen_monet(img_buf)
     out_file = InputFile(out_img, filename="monet.jpg")
     await message.reply_photo(out_file)
 

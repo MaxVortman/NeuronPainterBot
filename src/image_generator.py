@@ -5,6 +5,10 @@ import PIL
 from tensorflow_addons.layers import InstanceNormalization
 import io
 
+monet_generator = keras.models.load_model('../models/monet_generator.h5',
+                                          custom_objects={'InstanceNormalization': InstanceNormalization},
+                                          compile=True)
+
 
 def normalize_img(img):
     img = tf.cast(img, dtype=tf.float32)
@@ -19,16 +23,13 @@ def pil_2_bio(img):
     return img_byte_arr
 
 
-def gen_monet(file_path):
-    model = keras.models.load_model('../models/monet_generator.h5',
-                                    custom_objects={'InstanceNormalization': InstanceNormalization},
-                                    compile=True)
-    img = PIL.Image.open(file_path)
+def gen_monet(input_buf):
+    img = PIL.Image.open(input_buf)
     resized_img = img.resize((256, 256))
     img_array = keras.preprocessing.image.img_to_array(resized_img)
     img_array = normalize_img(img_array)
     img_array = tf.expand_dims(img_array, 0)  # Create a batch
-    prediction = model.predict(img_array)[0]  # make prediction
+    prediction = monet_generator.predict(img_array)[0]  # make prediction
     prediction = (prediction * 127.5 + 127.5).astype(np.uint8)  # re-scale
     out_img = PIL.Image.fromarray(prediction).resize(img.size)
     return pil_2_bio(out_img)
