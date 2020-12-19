@@ -26,7 +26,7 @@ async def send_welcome(message: types.Message):
 
 @dp.message_handler(content_types=ContentType.PHOTO)
 async def monet_photo(message: types.Message):
-    photo = message.photo[2]
+    photo = message.photo[-1]
     file = await bot.get_file(photo.file_id)
     file_path = file.file_path
     img_buf = io.BytesIO()
@@ -36,6 +36,22 @@ async def monet_photo(message: types.Message):
     out_img = gen_monet(img)
     out_file = InputFile(pil_2_bio(out_img), filename="monet.jpg")
     await message.reply_photo(out_file)
+
+
+@dp.message_handler(content_types=ContentType.DOCUMENT)
+async def monet_photo_doc(message: types.Message):
+    file = await bot.get_file(message.document.file_id)
+    file_path = file.file_path
+    img_buf = io.BytesIO()
+    await bot.download_file(file_path, img_buf)
+    img_buf.seek(0)
+    try:
+        img = PIL.Image.open(img_buf)
+        out_img = gen_monet(img)
+        out_file = InputFile(pil_2_bio(out_img), filename="monet.jpg")
+        await message.reply_photo(out_file)
+    except IOError:
+        await message.reply('Error, not an image, or an unsupported format. Try sending a compressed photo.')
 
 
 @dp.message_handler(content_types=ContentType.VIDEO_NOTE)
